@@ -3,8 +3,11 @@ const http = require("http");
 const app = require("./src/app");
 const connectDB = require("./src/config/db");
 const initSockets = require("./src/sockets");
+const { validateEnv, PORT } = require("./src/config/env");
 
-const PORT = process.env.PORT || 4000;
+validateEnv();
+
+// const PORT = process.env.PORT || 4000;
 
 async function start() {
   await connectDB();

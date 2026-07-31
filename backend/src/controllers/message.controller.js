@@ -1,70 +1,6 @@
 const Message = require("../models/Message");
 const Channel = require("../models/Channel");
 const parseMentions = require("../utils/parseMentions");
-// const Message = require("../models/Message");
-// const Channel = require("../models/Channel");
-// const parseMentions = require("../utils/parseMentions");
-
-// io instance passed in from route setup, or attach to app.locals
-async function sendMessage(req, res, next) {
-  try {
-    const { channelId, content, parentMessageId, attachments } = req.body;
-    const senderId = req.userId; // from auth middleware
-
-    const mentions = await parseMentions(content); // returns array of userIds
-
-    const message = await Message.create({
-      channelId,
-      senderId,
-      content,
-      contentType: attachments?.length ? "image" : "text",
-      attachments,
-      mentions,
-      parentMessageId: parentMessageId || null,
-    });
-
-    await Channel.findByIdAndUpdate(channelId, { lastMessageAt: new Date() });
-
-    if (parentMessageId) {
-      await Message.findByIdAndUpdate(parentMessageId, {
-        $inc: { threadReplyCount: 1 },
-        threadLastReplyAt: new Date(),
-      });
-    }
-
-    const populated = await message.populate("senderId", "username avatarUrl");
-
-    // broadcast to everyone in the channel room
-    req.app.get("io").to(channelId).emit("message:new", populated);
-
-    res.status(201).json(populated);
-  } catch (err) {
-    next(err);
-  }
-}
-
-async function addReaction(req, res, next) {
-  try {
-    const { messageId } = req.params;
-    const { emoji } = req.body;
-    const userId = req.userId;
-
-    const message = await Message.findByIdAndUpdate(
-      messageId,
-      { $addToSet: { reactions: { emoji, userId } } },
-      { new: true }
-    );
-
-    req.app.get("io").to(message.channelId.toString()).emit("reaction:updated", {
-      messageId,
-      reactions: message.reactions,
-    });
-
-    res.json(message);
-  } catch (err) {
-    next(err);
-  }
-}
 
 
 async function sendMessage(req, res, next) {
@@ -214,7 +150,57 @@ async function removeReaction(req, res, next) {
   }
 }
 
+// GET /api/messages/mentions/me -> messages where I'm mentioned
+async function getMyMentions(req, res, next) {
+  try {
+    const userId = req.userId;
+    const { before, limit = 30 } = req.query;
+
+    const query = { mentions: userId, deletedAt: null };
+    if (before) query._id = { $lt: before };
+
+    const messages = await Message.find(query)
+      .sort({ _id: -1 })
+      .limit(Number(limit))
+      .populate("senderId", "username avatarUrl")
+      .populate("channelId", "name type");
+
+    res.json(messages.reverse());
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/messages/search?q=hello&channelId=<optional>
+async function searchMessages(req, res, next) {
+  try {
+    const { q, channelId } = req.query;
+    const userId = req.userId;
+
+    if (!q || !q.trim()) return res.json([]);
+
+    const query = { $text: { $search: q }, deletedAt: null };
+    if (channelId) {
+      query.channelId = channelId;
+    } else {
+      // scope to channels the user is a member of
+      const myChannels = await Channel.find({ "members.userId": userId }).select("_id");
+      query.channelId = { $in: myChannels.map((c) => c._id) };
+    }
+
+    const messages = await Message.find(query, { score: { $meta: "textScore" } })
+      .sort({ score: { $meta: "textScore" } })
+      .limit(30)
+      .populate("senderId", "username avatarUrl")
+      .populate("channelId", "name type");
+
+    res.json(messages);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   sendMessage, getMessages, editMessage, deleteMessage,
-  togglePin, addReaction, removeReaction,
+  togglePin, addReaction, removeReaction, getMyMentions, searchMessages
 };
