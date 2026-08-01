@@ -13,7 +13,9 @@ function initSockets(server) {
   io.use(socketAuth);
 
   io.on("connection", async (socket) => {
-    // join a room per channel this user belongs to
+    // personal room, always reachable regardless of which channel rooms are joined
+    socket.join(socket.userId);
+
     const channels = await Channel.find({ "members.userId": socket.userId }).select("_id");
     channels.forEach((c) => socket.join(c._id.toString()));
 

@@ -2,7 +2,6 @@ const Channel = require("../models/Channel");
 const Message = require("../models/Message");
 const Read = require("../models/Read");
 
-// fetch all channels for the logged-in user, with unread counts
 async function getMyChannels(req, res, next) {
   try {
     const userId = req.userId;
@@ -37,7 +36,6 @@ async function createDM(req, res, next) {
     const { otherUserId } = req.body;
     const userId = req.userId;
 
-    // reuse existing dm if one already exists between these two users
     const existing = await Channel.findOne({
       type: "dm",
       "members.userId": { $all: [userId, otherUserId] },
@@ -50,7 +48,14 @@ async function createDM(req, res, next) {
       members: [{ userId }, { userId: otherUserId }],
       createdBy: userId,
     });
-    res.status(201).json(channel);
+
+    const populated = await channel.populate("members.userId", "username avatarUrl status");
+    const io = req.app.get("io");
+    [userId, otherUserId].forEach((id) => {
+      io.to(id.toString()).emit("channel:new", populated);
+    });
+
+    res.status(201).json(populated);
   } catch (err) {
     next(err);
   }
@@ -63,7 +68,14 @@ async function createGroup(req, res, next) {
 
     const members = [{ userId, role: "admin" }, ...memberIds.map((id) => ({ userId: id }))];
     const channel = await Channel.create({ type: "group", name, members, createdBy: userId });
-    res.status(201).json(channel);
+
+    const populated = await channel.populate("members.userId", "username avatarUrl status");
+    const io = req.app.get("io");
+    members.forEach((m) => {
+      io.to(m.userId.toString()).emit("channel:new", populated);
+    });
+
+    res.status(201).json(populated);
   } catch (err) {
     next(err);
   }
