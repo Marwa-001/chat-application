@@ -17,7 +17,13 @@ async function sendMessage(req, res, next) {
       parentMessageId: parentMessageId || null,
     });
 
-    await Channel.findByIdAndUpdate(channelId, { lastMessageAt: new Date() });
+    await Channel.findByIdAndUpdate(channelId, {
+      lastMessageAt: new Date(),
+      lastMessage: {
+        content: attachments?.length ? "📎 Attachment" : content,
+        senderId,
+      },
+    });
 
     if (parentMessageId) {
       await Message.findByIdAndUpdate(parentMessageId, {

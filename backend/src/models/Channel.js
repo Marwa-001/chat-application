@@ -12,11 +12,15 @@ const memberSchema = new mongoose.Schema(
 const channelSchema = new mongoose.Schema(
   {
     type: { type: String, enum: ["dm", "group"], required: true },
-    name: { type: String, trim: true }, // ignored for dm on the frontend
+    name: { type: String, trim: true },
     description: { type: String, default: "" },
     members: { type: [memberSchema], validate: (v) => v.length > 0 },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     lastMessageAt: { type: Date, default: Date.now },
+    lastMessage: {
+      content: { type: String, default: "" },
+      senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    },
   },
   { timestamps: true }
 );

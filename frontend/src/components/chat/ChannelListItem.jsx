@@ -10,7 +10,7 @@ export default function ChannelListItem({ channel, isActive, onClick }) {
   const { user } = useAuth();
   const currentUserId = user?.id;
 
-  if(!channel) return null;
+  if (!channel) return null;
 
   const displayName = getChannelDisplayName(channel, currentUserId);
   const avatar = getChannelAvatar(channel, currentUserId);
@@ -46,7 +46,11 @@ export default function ChannelListItem({ channel, isActive, onClick }) {
         </div>
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p className="truncate text-xs text-gray-500">
-            {channel.type === "group" ? `Group · ${channel.members?.length ?? 0} members` : "Say hi 👋"}
+            {channel.lastMessage?.content
+              ? channel.lastMessage.content
+              : channel.type === "group"
+                ? `Group · ${channel.members?.length ?? 0} members`
+                : "Say hi 👋"}
           </p>
           {hasUnread && (
             <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-semibold text-white">
