@@ -12,7 +12,8 @@ export function getChannelDisplayName(channel, currentUserId) {
 export function getChannelAvatar(channel, currentUserId) {
   if (!channel) return { src: null, name: "?" };
   if (channel.type === "group") {
-    return { src: null, name: channel.name || "Group" };
+    const memberAvatars = channel.members?.slice(0, 4).map(m => m.userId?.avatarUrl || null);
+    return { isGroup: true, members: memberAvatars, name: channel.name || "Group" };
   }
   const other = channel.members?.find(
     (m) => (m.userId?._id || m.userId) !== currentUserId

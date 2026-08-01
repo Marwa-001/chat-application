@@ -20,14 +20,14 @@ export default function ChatWindow({ channelId, onBack, highlightMessageId, onHi
   const { typingUsers } = useTyping(channelId);
   const [activeThreadMessage, setActiveThreadMessage] = useState(null);
 
-  useEffect(() => {
-    if (!channelId) return;
-    const socket = getSocket();
-    if (!socket) return;
+  // useEffect(() => {
+  //   if (!channelId) return;
+  //   const socket = getSocket();
+  //   if (!socket) return;
 
-    socket.emit("channel:join", { channelId });
-    return () => socket.emit("channel:leave", { channelId });
-  }, [channelId]);
+  //   socket.emit("channel:join", { channelId });
+  //   return () => socket.emit("channel:leave", { channelId });
+  // }, [channelId]);
 
   useEffect(() => {
     if (!channelId || !messages?.length) return;

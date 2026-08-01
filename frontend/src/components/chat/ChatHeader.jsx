@@ -15,6 +15,7 @@ export default function ChatHeader({ displayName, avatar, channelType, onBack })
         src={avatar.src}
         name={avatar.name}
         status={channelType === "dm" ? avatar.status : undefined}
+        isGroup={avatar.isGroup} members={avatar.members}
       />
 
       <div className="min-w-0">

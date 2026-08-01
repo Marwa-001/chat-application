@@ -206,7 +206,33 @@ async function searchMessages(req, res, next) {
   }
 }
 
+async function deleteMessage(req, res, next) {
+  try {
+    const { messageId } = req.params;
+    const message = await Message.findOneAndUpdate(
+      { _id: messageId, senderId: req.userId },
+      { deletedAt: new Date() },
+      { new: true }
+    );
+    if (!message) return res.status(404).json({ message: "Message not found" });
+
+    // NEW: recompute channel preview from the latest non-deleted message
+    const latest = await Message.findOne({ channelId: message.channelId, deletedAt: null })
+      .sort({ _id: -1 })
+      .select("content attachments senderId");
+    await Channel.findByIdAndUpdate(message.channelId, {
+      lastMessage: latest
+        ? { content: latest.attachments?.length ? "📎 Attachment" : latest.content, senderId: latest.senderId }
+        : { content: "", senderId: null },
+    });
+
+    req.app.get("io").to(message.channelId.toString()).emit("message:deleted", { messageId });
+    req.app.get("io").to(message.channelId.toString()).emit("channel:updated", { channelId: message.channelId });
+    res.json({ success: true });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   sendMessage, getMessages, editMessage, deleteMessage,
-  togglePin, addReaction, removeReaction, getMyMentions, searchMessages
+  togglePin, addReaction, removeReaction, getMyMentions, searchMessages, deleteMessage,
 };

@@ -93,12 +93,17 @@ export function useSocket() {
       socket.emit("channel:join", { channelId: channel._id });
     };
 
+    const handleChannelUpdated = ({ channelId }) => {
+  queryClient.invalidateQueries({ queryKey: ["channels"] });
+};
+
     socket.on("message:new", handleNewMessage);
     socket.on("message:updated", handleMessageUpdated);
     socket.on("message:deleted", handleMessageDeleted);
     socket.on("reaction:updated", handleReactionUpdated);
     socket.on("presence:update", handlePresenceUpdate);
     socket.on("channel:new", handleChannelNew);
+    socket.on("channel:updated", handleChannelUpdated);
 
     return () => {
       socket.off("message:new", handleNewMessage);
@@ -107,6 +112,7 @@ export function useSocket() {
       socket.off("reaction:updated", handleReactionUpdated);
       socket.off("presence:update", handlePresenceUpdate);
       socket.off("channel:new", handleChannelNew);
+      socket.off("channel:updated", handleChannelUpdated); 
     };
   }, [isHydrated, token, queryClient]);
 }

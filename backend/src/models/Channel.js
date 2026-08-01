@@ -5,6 +5,7 @@ const memberSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     role: { type: String, enum: ["admin", "member"], default: "member" },
     joinedAt: { type: Date, default: Date.now },
+    muted: { type: Boolean, default: false },
   },
   { _id: false }
 );

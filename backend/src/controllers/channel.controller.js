@@ -1,6 +1,7 @@
 const Channel = require("../models/Channel");
 const Message = require("../models/Message");
 const Read = require("../models/Read");
+const mongoose = require("mongoose");
 
 async function getMyChannels(req, res, next) {
   try {
@@ -98,4 +99,42 @@ async function markAsRead(req, res, next) {
   }
 }
 
-module.exports = { getMyChannels, createDM, createGroup, markAsRead };
+async function toggleMute(req, res, next) {
+  try {
+    const { channelId } = req.params;
+    const userId = new mongoose.Types.ObjectId(req.userId); // CHANGED
+
+    const channel = await Channel.findOneAndUpdate(
+      { _id: channelId, "members.userId": userId },
+      [
+        {
+          $set: {
+            members: {
+              $map: {
+                input: "$members",
+                as: "m",
+                in: {
+                  $cond: [
+                    { $eq: ["$$m.userId", userId] },
+                    { $mergeObjects: ["$$m", { muted: { $not: ["$$m.muted"] } }] },
+                    "$$m",
+                  ],
+                },
+              },
+            },
+          },
+        },
+      ],
+      { new: true, updatePipeline: true }
+    );
+
+    if (!channel) return res.status(404).json({ message: "Channel not found" });
+
+    const populated = await channel.populate("members.userId", "username avatarUrl status");
+    res.json(populated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getMyChannels, createDM, createGroup, markAsRead, toggleMute };

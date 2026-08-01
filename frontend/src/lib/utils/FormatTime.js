@@ -12,16 +12,16 @@ export function formatChannelTimestamp(dateInput) {
   const withinWeek = now - date < 6 * 24 * 60 * 60 * 1000;
 
   if (isToday) {
-    return date.toLocaleTimeString("en-US", {
+    return date.toLocaleTimeString(undefined, {
       hour: "numeric",
       minute: "2-digit",
     });
   }
   if (isYesterday) return "Yesterday";
   if (withinWeek) {
-    return date.toLocaleDateString("en-US", { weekday: "long" });
+    return date.toLocaleDateString(undefined, { weekday: "long" });
   }
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(undefined, {
     month: "numeric",
     day: "numeric",
     year: "2-digit",
