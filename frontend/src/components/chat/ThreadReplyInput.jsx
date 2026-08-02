@@ -10,23 +10,25 @@ export default function ThreadReplyInput({ channelId, parentMessageId }) {
   const [alsoSendToMain, setAlsoSendToMain] = useState(false);
   const sendMessage = useSendMessage(channelId);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
   e.preventDefault();
   const trimmed = content.trim();
   if (!trimmed || sendMessage.isPending) return;
 
-  sendMessage.mutate(
-    { channelId, content: trimmed, parentMessageId },
-    { onSuccess: () => setContent("") }
-  );
+  try {
+    const createdReply = await sendMessage.mutateAsync({ channelId, content: trimmed, parentMessageId });
+    setContent("");
 
-  if (alsoSendToMain) {
-    sendMessage.mutate({ channelId, content: trimmed, repliedToThreadId: parentMessageId }); // CHANGED
+    if (alsoSendToMain) {
+      await sendMessage.mutateAsync({
+        channelId,
+        content: trimmed,
+        repliedToThreadId: createdReply._id,
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send reply:", err);
   }
-  // Reset the input field after sending the message
-  setContent("");
-  setAlsoSendToMain(false);
-  
 };
 
   return (

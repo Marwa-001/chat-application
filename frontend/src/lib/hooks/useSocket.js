@@ -100,6 +100,13 @@ export function useSocket() {
       }));
     };
 
+    const handleMessageLinkUpdated = ({ messageId, alsoSentToMainId }) => {
+      queryClient.setQueriesData({ queryKey: ["messages"] }, (old) => {
+        if (!old) return old;
+        return old.map((m) => (m._id === messageId ? { ...m, alsoSentToMainId } : m));
+      });
+    };
+
     const handleChannelUpdated = ({ channelId }) => {
       queryClient.invalidateQueries({ queryKey: ["channels"] });
     };
@@ -112,6 +119,7 @@ export function useSocket() {
     socket.on("channel:new", handleChannelNew);
     socket.on("channel:updated", handleChannelUpdated);
     socket.on("read:updated", handleReadUpdated);
+    socket.on("message:link-updated", handleMessageLinkUpdated);
 
     return () => {
       socket.off("message:new", handleNewMessage);
@@ -122,6 +130,7 @@ export function useSocket() {
       socket.off("channel:new", handleChannelNew);
       socket.off("channel:updated", handleChannelUpdated);
       socket.off("read:updated", handleReadUpdated);
+      socket.off("message:link-updated", handleMessageLinkUpdated);
     };
   }, [isHydrated, token, queryClient]);
 }

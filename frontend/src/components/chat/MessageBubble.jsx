@@ -131,19 +131,26 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
         )}
 
         {message.repliedToThreadId && (
-  <button
-    onClick={() => onOpenThread?.(message.repliedToThreadId)}
-    className="mb-1 flex flex-col items-start gap-0.5 text-left"
-  >
-    <span className="flex items-center gap-1 text-[11px] text-gray-400">
-      <MessageSquareText className="h-3 w-3" />
-      Replied to a thread
-    </span>
-    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-      {message.repliedToThreadId.senderId?.username}
-    </span>
-  </button>
-)}
+          <button
+            onClick={() => onOpenThread?.(message.repliedToThreadId)}
+            className="mb-1 flex flex-col items-start gap-0.5 text-left"
+          >
+            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+              <MessageSquareText className="h-3 w-3" />
+              Replied to a thread
+            </span>
+            <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+              {message.repliedToThreadId.senderId?.username}
+            </span>
+          </button>
+        )}
+
+        {message.alsoSentToMainId && (
+          <div className="mb-1 flex items-center gap-1 text-[11px] text-gray-400">
+            <MessageSquareText className="h-3 w-3" />
+            Also sent to the channel
+          </div>
+        )}
 
         {/* Reactions now render ABOVE the bubble */}
         {Object.keys(groupedReactions).length > 0 && (

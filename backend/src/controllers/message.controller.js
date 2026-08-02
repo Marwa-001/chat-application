@@ -18,6 +18,16 @@ async function sendMessage(req, res, next) {
       repliedToThreadId: repliedToThreadId || null,
     });
 
+    if (repliedToThreadId) {
+      await Message.findByIdAndUpdate(repliedToThreadId, {
+        alsoSentToMainId: message._id,
+      });
+      req.app.get("io").to(channelId).emit("message:link-updated", {
+        messageId: repliedToThreadId,
+        alsoSentToMainId: message._id,
+      });
+    }
+
     await Channel.findByIdAndUpdate(channelId, {
       lastMessageAt: new Date(),
       lastMessage: {
@@ -34,7 +44,8 @@ async function sendMessage(req, res, next) {
     }
 
     const populated = await message.populate("senderId", "username avatarUrl")
-    .then((m) => m.populate({ path: "repliedToThreadId", select: "content senderId", populate: { path: "senderId", select: "username" } }));
+      .then((m) => m.populate({ path: "repliedToThreadId", select: "content senderId", populate: { path: "senderId", select: "username" } }));
+
     req.app.get("io").to(channelId).emit("message:new", populated);
     res.status(201).json(populated);
   } catch (err) {
