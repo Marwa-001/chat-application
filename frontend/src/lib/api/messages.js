@@ -7,12 +7,13 @@ export async function getMessages(channelId, { before, parentMessageId } = {}) {
   return res.data;
 }
 
-export async function sendMessage({ channelId, content, parentMessageId, attachments }) {
+export async function sendMessage({ channelId, content, parentMessageId, attachments, repliedToThreadId }) {
   const res = await api.post("/messages", {
     channelId,
     content,
     parentMessageId,
     attachments,
+    repliedToThreadId,
   });
   return res.data;
 }

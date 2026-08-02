@@ -5,7 +5,7 @@ import clsx from "clsx";
 import Avatar from "@/components/ui/Avatar";
 import MessageHoverMenu from "./MessageHoverMenu";
 import DeleteConfirmDialog from "./DeleteConfirmDialog";
-import { Pin, Check, X } from "lucide-react";
+import { Pin, Check, X, CheckCheck, MessageSquareText } from "lucide-react";
 import {
   useEditMessage,
   useDeleteMessage,
@@ -16,7 +16,6 @@ import {
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useReadReceipts } from "@/lib/hooks/useReadReceipts";
 import { useChannelHeader } from "@/lib/hooks/useChannelHeader";
-import { CheckCheck } from "lucide-react";
 
 export default function MessageBubble({ message, isOwn, showAvatar, channelId, onReply, onOpenThread, disableThread, isLastInStack = true }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -130,6 +129,21 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
             <Pin className="h-3 w-3" /> Pinned
           </div>
         )}
+
+        {message.repliedToThreadId && (
+  <button
+    onClick={() => onOpenThread?.(message.repliedToThreadId)}
+    className="mb-1 flex flex-col items-start gap-0.5 text-left"
+  >
+    <span className="flex items-center gap-1 text-[11px] text-gray-400">
+      <MessageSquareText className="h-3 w-3" />
+      Replied to a thread
+    </span>
+    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+      {message.repliedToThreadId.senderId?.username}
+    </span>
+  </button>
+)}
 
         {/* Reactions now render ABOVE the bubble */}
         {Object.keys(groupedReactions).length > 0 && (

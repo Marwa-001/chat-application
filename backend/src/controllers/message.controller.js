@@ -5,7 +5,7 @@ const parseMentions = require("../utils/parseMentions");
 
 async function sendMessage(req, res, next) {
   try {
-    const { channelId, content, parentMessageId, attachments } = req.body;
+    const { channelId, content, parentMessageId, attachments, repliedToThreadId } = req.body;
     const senderId = req.userId;
 
     const mentions = await parseMentions(content);
@@ -15,6 +15,7 @@ async function sendMessage(req, res, next) {
       contentType: attachments?.length ? "image" : "text",
       attachments, mentions,
       parentMessageId: parentMessageId || null,
+      repliedToThreadId: repliedToThreadId || null,
     });
 
     await Channel.findByIdAndUpdate(channelId, {
@@ -32,7 +33,8 @@ async function sendMessage(req, res, next) {
       });
     }
 
-    const populated = await message.populate("senderId", "username avatarUrl");
+    const populated = await message.populate("senderId", "username avatarUrl")
+    .then((m) => m.populate({ path: "repliedToThreadId", select: "content senderId", populate: { path: "senderId", select: "username" } }));
     req.app.get("io").to(channelId).emit("message:new", populated);
     res.status(201).json(populated);
   } catch (err) {
@@ -79,22 +81,22 @@ async function editMessage(req, res, next) {
   }
 }
 
-async function deleteMessage(req, res, next) {
-  try {
-    const { messageId } = req.params;
-    const message = await Message.findOneAndUpdate(
-      { _id: messageId, senderId: req.userId },
-      { deletedAt: new Date() },
-      { new: true }
-    );
-    if (!message) return res.status(404).json({ message: "Message not found" });
+// async function deleteMessage(req, res, next) {
+//   try {
+//     const { messageId } = req.params;
+//     const message = await Message.findOneAndUpdate(
+//       { _id: messageId, senderId: req.userId },
+//       { deletedAt: new Date() },
+//       { new: true }
+//     );
+//     if (!message) return res.status(404).json({ message: "Message not found" });
 
-    req.app.get("io").to(message.channelId.toString()).emit("message:deleted", { messageId });
-    res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-}
+//     req.app.get("io").to(message.channelId.toString()).emit("message:deleted", { messageId });
+//     res.json({ success: true });
+//   } catch (err) {
+//     next(err);
+//   }
+// }
 
 async function togglePin(req, res, next) {
   try {
@@ -234,5 +236,5 @@ async function deleteMessage(req, res, next) {
 
 module.exports = {
   sendMessage, getMessages, editMessage, deleteMessage,
-  togglePin, addReaction, removeReaction, getMyMentions, searchMessages, deleteMessage,
+  togglePin, addReaction, removeReaction, getMyMentions, searchMessages,
 };

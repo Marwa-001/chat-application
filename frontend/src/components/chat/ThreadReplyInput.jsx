@@ -11,19 +11,23 @@ export default function ThreadReplyInput({ channelId, parentMessageId }) {
   const sendMessage = useSendMessage(channelId);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    const trimmed = content.trim();
-    if (!trimmed || sendMessage.isPending) return;
+  e.preventDefault();
+  const trimmed = content.trim();
+  if (!trimmed || sendMessage.isPending) return;
 
-    sendMessage.mutate(
-      { channelId, content: trimmed, parentMessageId },
-      { onSuccess: () => setContent("") }
-    );
+  sendMessage.mutate(
+    { channelId, content: trimmed, parentMessageId },
+    { onSuccess: () => setContent("") }
+  );
 
-    if (alsoSendToMain) {
-      sendMessage.mutate({ channelId, content: trimmed });
-    }
-  };
+  if (alsoSendToMain) {
+    sendMessage.mutate({ channelId, content: trimmed, repliedToThreadId: parentMessageId }); // CHANGED
+  }
+  // Reset the input field after sending the message
+  setContent("");
+  setAlsoSendToMain(false);
+  
+};
 
   return (
     <div className="border-t border-gray-200 px-3 py-2 sm:px-4 sm:py-3">
