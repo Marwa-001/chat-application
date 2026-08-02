@@ -30,10 +30,10 @@ export function useSocket() {
           return old.map((m) =>
             m._id === message.parentMessageId
               ? {
-                  ...m,
-                  threadReplyCount: (m.threadReplyCount || 0) + 1,
-                  threadLastReplyAt: message.createdAt,
-                }
+                ...m,
+                threadReplyCount: (m.threadReplyCount || 0) + 1,
+                threadLastReplyAt: message.createdAt,
+              }
               : m
           );
         });
@@ -93,9 +93,16 @@ export function useSocket() {
       socket.emit("channel:join", { channelId: channel._id });
     };
 
+    const handleReadUpdated = ({ channelId, userId, lastReadMessageId }) => {
+      queryClient.setQueryData(["readReceipts", channelId], (old) => ({
+        ...(old || {}),
+        [userId]: lastReadMessageId,
+      }));
+    };
+
     const handleChannelUpdated = ({ channelId }) => {
-  queryClient.invalidateQueries({ queryKey: ["channels"] });
-};
+      queryClient.invalidateQueries({ queryKey: ["channels"] });
+    };
 
     socket.on("message:new", handleNewMessage);
     socket.on("message:updated", handleMessageUpdated);
@@ -104,6 +111,7 @@ export function useSocket() {
     socket.on("presence:update", handlePresenceUpdate);
     socket.on("channel:new", handleChannelNew);
     socket.on("channel:updated", handleChannelUpdated);
+    socket.on("read:updated", handleReadUpdated);
 
     return () => {
       socket.off("message:new", handleNewMessage);
@@ -112,7 +120,8 @@ export function useSocket() {
       socket.off("reaction:updated", handleReactionUpdated);
       socket.off("presence:update", handlePresenceUpdate);
       socket.off("channel:new", handleChannelNew);
-      socket.off("channel:updated", handleChannelUpdated); 
+      socket.off("channel:updated", handleChannelUpdated);
+      socket.off("read:updated", handleReadUpdated);
     };
   }, [isHydrated, token, queryClient]);
 }

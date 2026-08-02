@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useMessages } from "@/lib/hooks/useMessages";
 import { useAuth } from "@/lib/hooks/useAuth";
 import MessageBubble from "./MessageBubble";
+import clsx from "clsx";
 
 export default function MessageList({ channelId, onReply, onOpenThread, highlightMessageId, onHighlighted }) {
   const { data: messages, isLoading, isError } = useMessages(channelId);
@@ -60,22 +61,27 @@ export default function MessageList({ channelId, onReply, onOpenThread, highligh
   }
 
   return (
-    <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
+    <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
       {messages.map((message, i) => {
         const isOwn = message.senderId?._id === user?.id;
         const prev = messages[i - 1];
-        const showAvatar = !prev || prev.senderId?._id !== message.senderId?._id;
+        const next = messages[i + 1];
+        const isFirstInStack = !prev || prev.senderId?._id !== message.senderId?._id;
+        const isLastInStack = !next || next.senderId?._id !== message.senderId?._id;
 
         return (
           <div
             key={message._id}
             ref={(el) => { messageRefs.current[message._id] = el; }}
-            className={flashId === message._id ? "rounded-lg bg-yellow-50 transition-colors duration-1000" : ""}
+            className={clsx(
+              isFirstInStack ? "mt-3" : "mt-0.5",
+              flashId === message._id && "rounded-lg bg-yellow-50 transition-colors duration-1000"
+            )}
           >
             <MessageBubble
               message={message}
               isOwn={isOwn}
-              showAvatar={showAvatar}
+              isLastInStack={isLastInStack}
               channelId={channelId}
               onReply={onReply}
               onOpenThread={onOpenThread}

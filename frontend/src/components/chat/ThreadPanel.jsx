@@ -39,16 +39,20 @@ export default function ThreadPanel({ channelId, parentMessage, onClose }) {
           </div>
         ) : replies?.length ? (
           <div className="space-y-3">
-            {replies.map((reply, i) => (
-              <MessageBubble
-                key={reply._id}
-                message={reply}
-                isOwn={reply.senderId?._id === user?.id}
-                showAvatar={!replies[i - 1] || replies[i - 1].senderId?._id !== reply.senderId?._id}
-                channelId={channelId}
-                disableThread
-              />
-            ))}
+            {replies.map((reply, i) => {
+              const next = replies[i + 1];
+              const isLastInStack = !next || next.senderId?._id !== reply.senderId?._id;
+              return (
+                <MessageBubble
+                  key={reply._id}
+                  message={reply}
+                  isOwn={reply.senderId?._id === user?.id}
+                  isLastInStack={isLastInStack}
+                  channelId={channelId}
+                  disableThread
+                />
+              );
+            })}
           </div>
         ) : (
           <p className="py-6 text-center text-sm text-gray-400">No replies yet</p>

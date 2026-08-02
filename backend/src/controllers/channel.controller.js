@@ -93,6 +93,11 @@ async function markAsRead(req, res, next) {
       { lastReadMessageId, lastReadAt: new Date() },
       { upsert: true }
     );
+
+    // NEW: notify everyone else in the channel that this user has read up to this point
+    const io = req.app.get("io");
+    io.to(channelId).emit("read:updated", { channelId, userId, lastReadMessageId });
+
     res.json({ success: true });
   } catch (err) {
     next(err);
@@ -102,7 +107,7 @@ async function markAsRead(req, res, next) {
 async function toggleMute(req, res, next) {
   try {
     const { channelId } = req.params;
-    const userId = new mongoose.Types.ObjectId(req.userId); // CHANGED
+    const userId = new mongoose.Types.ObjectId(req.userId); 
 
     const channel = await Channel.findOneAndUpdate(
       { _id: channelId, "members.userId": userId },

@@ -14,12 +14,17 @@ import {
   useRemoveReaction,
 } from "@/lib/hooks/useMessageMutation";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useReadReceipts } from "@/lib/hooks/useReadReceipts";
+import { useChannelHeader } from "@/lib/hooks/useChannelHeader";
+import { CheckCheck } from "lucide-react";
 
-export default function MessageBubble({ message, isOwn, showAvatar, channelId, onReply, onOpenThread, disableThread, }) {
+export default function MessageBubble({ message, isOwn, showAvatar, channelId, onReply, onOpenThread, disableThread, isLastInStack = true }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(message.content);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { data: readReceipts } = useReadReceipts(channelId);
+  const { channel } = useChannelHeader(channelId);
 
   const { user } = useAuth();
   const editMessage = useEditMessage(channelId);
@@ -32,6 +37,31 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
     hour: "numeric",
     minute: "2-digit",
   });
+
+  // Only relevant for messages the current user sent
+  const readStatus = (() => {
+    if (!isOwn || !channel) return null;
+
+    const otherMemberIds = channel.members
+      ?.map((m) => m.userId?._id || m.userId)
+      .filter((id) => id !== user?.id) || [];
+
+    if (!otherMemberIds.length) return null;
+
+    const readers = otherMemberIds.filter((id) => {
+      const lastRead = readReceipts?.[id];
+      if (!lastRead) return false;
+      // ObjectIds sort chronologically as strings when same length
+      return lastRead >= message._id;
+    });
+
+    if (channel.type === "dm") {
+      return readers.length > 0 ? "read" : "sent";
+    }
+
+    // group: show a count
+    return { seenCount: readers.length, total: otherMemberIds.length };
+  })();
 
   const handleReact = (emoji) => {
     const alreadyReacted = message.reactions?.some(
@@ -76,28 +106,44 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
     >
       {!isOwn && (
         <div className="w-7 shrink-0 sm:w-8">
-          {showAvatar && (
+          {isLastInStack && (
             <Avatar src={message.senderId?.avatarUrl} name={message.senderId?.username} size="sm" />
           )}
         </div>
       )}
 
-      <div className={clsx("relative flex max-w-[85%] flex-col sm:max-w-[70%]", isOwn && "items-end")}>
-       <MessageHoverMenu
-  isOwn={isOwn}
-  isVisible={isHovered}
-  onReply={() => onReply?.(message)}
-  onThreadReply={() => onOpenThread?.(message)}
-  onEdit={() => setIsEditing(true)}
-  onPin={() => togglePin.mutate(message._id)}
-  onDelete={() => setShowDeleteDialog(true)}
-  onReact={handleReact}
-  hideThreadReply={disableThread}
-/>
+      <div className={clsx("relative flex max-w-[85% ] flex-col gap-0.5 sm:max-w-[70%]", isOwn && "items-end")}>
+        <MessageHoverMenu
+          isOwn={isOwn}
+          isVisible={isHovered}
+          onReply={() => onReply?.(message)}
+          onThreadReply={() => onOpenThread?.(message)}
+          onEdit={() => setIsEditing(true)}
+          onPin={() => togglePin.mutate(message._id)}
+          onDelete={() => setShowDeleteDialog(true)}
+          onReact={handleReact}
+          hideThreadReply={disableThread}
+        />
 
         {message.pinned && (
-          <div className="mb-1 flex items-center gap-1 text-[11px] text-amber-600">
+          <div className="flex items-center gap-1 text-[11px] text-amber-600">
             <Pin className="h-3 w-3" /> Pinned
+          </div>
+        )}
+
+        {/* Reactions now render ABOVE the bubble */}
+        {Object.keys(groupedReactions).length > 0 && (
+          <div className="flex gap-1">
+            {Object.entries(groupedReactions).map(([emoji, count]) => (
+              <button
+                key={emoji}
+                onClick={() => handleReact(emoji)}
+                className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-1.5 py-0.5 text-xs hover:bg-gray-50"
+              >
+                <span>{emoji}</span>
+                <span className="text-gray-500">{count}</span>
+              </button>
+            ))}
           </div>
         )}
 
@@ -136,31 +182,34 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
           </div>
         )}
 
-        {Object.keys(groupedReactions).length > 0 && (
-          <div className="mt-1 flex gap-1">
-            {Object.entries(groupedReactions).map(([emoji, count]) => (
-              <button
-                key={emoji}
-                onClick={() => handleReact(emoji)}
-                className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-1.5 py-0.5 text-xs hover:bg-gray-50"
-              >
-                <span>{emoji}</span>
-                <span className="text-gray-500">{count}</span>
-              </button>
-            ))}
-          </div>
+        {!disableThread && message.threadReplyCount > 0 && (
+          <button
+            onClick={() => onOpenThread?.(message)}
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+          >
+            {message.threadReplyCount} {message.threadReplyCount === 1 ? "reply" : "replies"}
+          </button>
         )}
 
-        {!disableThread && message.threadReplyCount > 0 && (
-  <button
-    onClick={() => onOpenThread?.(message)}
-    className="mt-1 flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
-  >
-    {message.threadReplyCount} {message.threadReplyCount === 1 ? "reply" : "replies"}
-  </button>
-)}
-
-        <span className="mt-1 text-[11px] text-gray-400">{time}</span>
+        {/* Timestamp only on the last message in the stack */}
+        {isLastInStack && (
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-gray-400">{time}</span>
+            {readStatus === "sent" && (
+              <Check className="h-3 w-3 text-gray-400" />
+            )}
+            {readStatus === "read" && (
+              <CheckCheck className="h-3 w-3 text-blue-500" />
+            )}
+            {readStatus && typeof readStatus === "object" && (
+              <span className="text-[10px] text-gray-400">
+                {readStatus.seenCount > 0
+                  ? `Seen by ${readStatus.seenCount}/${readStatus.total}`
+                  : ""}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <DeleteConfirmDialog
