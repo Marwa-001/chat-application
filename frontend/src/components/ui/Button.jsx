@@ -17,7 +17,7 @@ export default function Button({
       className={clsx(
         "flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5",
         "text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-        variant === "primary" && "bg-blue-600 text-white hover:bg-blue-700",
+        variant === "primary" && "bg-[#E0F0FF] text-gray-900 hover:bg-blue-700",
         variant === "secondary" &&
           "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
         className

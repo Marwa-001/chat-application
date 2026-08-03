@@ -20,17 +20,17 @@ export default function LinkPreviewCard({ preview, isOwn }) {
       )}
       <div className="px-3 py-2">
         {preview.siteName && (
-          <p className={clsx("text-xs font-medium", isOwn ? "text-blue-100" : "text-blue-600")}>
+          <p className={clsx("text-xs font-medium text-blue-600")}>
             {preview.siteName}
           </p>
         )}
         {preview.title && (
-          <p className={clsx("line-clamp-2 text-sm font-semibold", isOwn ? "text-white" : "text-gray-900")}>
+          <p className={clsx("line-clamp-2 text-sm font-semibold text-gray-900")}>
             {preview.title}
           </p>
         )}
         {preview.description && (
-          <p className={clsx("mt-0.5 line-clamp-2 text-xs", isOwn ? "text-blue-100" : "text-gray-500")}>
+          <p className={clsx("mt-0.5 line-clamp-2 text-xs text-gray-500")}>
             {preview.description}
           </p>
         )}

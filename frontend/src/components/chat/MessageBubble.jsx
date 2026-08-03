@@ -182,8 +182,8 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
         ) : (
           <div
             className={clsx(
-              "break-words rounded-2xl px-3.5 py-2 text-sm",
-              isOwn ? "rounded-br-sm bg-blue-600 text-white" : "rounded-bl-sm bg-gray-100 text-gray-900"
+              "break-words rounded-2xl px-3.5 py-2 text-sm text-gray-900",
+              isOwn ? "rounded-br-sm bg-[#E0F0FF]" : "rounded-bl-sm bg-gray-100"
             )}
           >
             {message.replyTo && (
