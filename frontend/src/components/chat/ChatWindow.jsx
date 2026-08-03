@@ -19,15 +19,7 @@ export default function ChatWindow({ channelId, onBack, highlightMessageId, onHi
   const markAsRead = useMarkAsRead();
   const { typingUsers } = useTyping(channelId);
   const [activeThreadMessage, setActiveThreadMessage] = useState(null);
-
-  // useEffect(() => {
-  //   if (!channelId) return;
-  //   const socket = getSocket();
-  //   if (!socket) return;
-
-  //   socket.emit("channel:join", { channelId });
-  //   return () => socket.emit("channel:leave", { channelId });
-  // }, [channelId]);
+  const [replyingToMessage, setReplyingToMessage] = useState(null);
 
   useEffect(() => {
     if (!channelId || !messages?.length) return;
@@ -37,6 +29,7 @@ export default function ChatWindow({ channelId, onBack, highlightMessageId, onHi
 
   useEffect(() => {
     setActiveThreadMessage(null);
+    setReplyingToMessage(null);
   }, [channelId]);
 
   if (!channel) return null;
@@ -53,11 +46,16 @@ export default function ChatWindow({ channelId, onBack, highlightMessageId, onHi
         <MessageList
           channelId={channelId}
           onOpenThread={setActiveThreadMessage}
+          onReply={setReplyingToMessage}
           highlightMessageId={highlightMessageId}
           onHighlighted={onHighlighted}
         />
         <TypingIndicator typingUsers={typingUsers} channel={channel} />
-        <MessageInput channelId={channelId} />
+        <MessageInput
+          channelId={channelId}
+          replyingToMessage={replyingToMessage}
+          onCancelReply={() => setReplyingToMessage(null)}
+        />
       </div>
 
       {activeThreadMessage && (

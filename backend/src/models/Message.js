@@ -31,6 +31,7 @@ const messageSchema = new mongoose.Schema(
     threadLastReplyAt: { type: Date, default: null },
     repliedToThreadId: { type: mongoose.Schema.Types.ObjectId, ref: "Message", default: null },
     alsoSentToMainId: { type: mongoose.Schema.Types.ObjectId, ref: "Message", default: null },
+    replyTo: { type: mongoose.Schema.Types.ObjectId, ref: "Message", default: null },
     reactions: [reactionSchema],
     pinned: { type: Boolean, default: false },
     editedAt: { type: Date, default: null },

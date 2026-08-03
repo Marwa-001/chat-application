@@ -5,7 +5,7 @@ const parseMentions = require("../utils/parseMentions");
 
 async function sendMessage(req, res, next) {
   try {
-    const { channelId, content, parentMessageId, attachments, repliedToThreadId } = req.body;
+    const { channelId, content, parentMessageId, attachments, repliedToThreadId, replyTo } = req.body;
     const senderId = req.userId;
 
     const mentions = await parseMentions(content);
@@ -16,6 +16,7 @@ async function sendMessage(req, res, next) {
       attachments, mentions,
       parentMessageId: parentMessageId || null,
       repliedToThreadId: repliedToThreadId || null,
+      replyTo: replyTo || null,
     });
 
     if (repliedToThreadId) {
@@ -44,7 +45,8 @@ async function sendMessage(req, res, next) {
     }
 
     const populated = await message.populate("senderId", "username avatarUrl")
-      .then((m) => m.populate({ path: "repliedToThreadId", select: "content senderId", populate: { path: "senderId", select: "username" } }));
+      .then((m) => m.populate({ path: "repliedToThreadId", select: "content senderId", populate: { path: "senderId", select: "username" } }))
+      .then((m) => m.populate({ path: "replyTo", select: "content senderId deletedAt", populate: { path: "senderId", select: "username" } }));
 
     req.app.get("io").to(channelId).emit("message:new", populated);
     res.status(201).json(populated);
@@ -65,7 +67,8 @@ async function getMessages(req, res, next) {
     const messages = await Message.find(query)
       .sort({ _id: -1 })
       .limit(Number(limit))
-      .populate("senderId", "username avatarUrl");
+      .populate("senderId", "username avatarUrl")
+      .populate({ path: "replyTo", select: "content senderId deletedAt", populate: { path: "senderId", select: "username" } });
 
     res.json(messages.reverse());
   } catch (err) {
@@ -91,23 +94,6 @@ async function editMessage(req, res, next) {
     next(err);
   }
 }
-
-// async function deleteMessage(req, res, next) {
-//   try {
-//     const { messageId } = req.params;
-//     const message = await Message.findOneAndUpdate(
-//       { _id: messageId, senderId: req.userId },
-//       { deletedAt: new Date() },
-//       { new: true }
-//     );
-//     if (!message) return res.status(404).json({ message: "Message not found" });
-
-//     req.app.get("io").to(message.channelId.toString()).emit("message:deleted", { messageId });
-//     res.json({ success: true });
-//   } catch (err) {
-//     next(err);
-//   }
-// }
 
 async function togglePin(req, res, next) {
   try {

@@ -112,17 +112,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
       )}
 
       <div className={clsx("relative flex max-w-[85% ] flex-col gap-0.5 sm:max-w-[70%]", isOwn && "items-end")}>
-        <MessageHoverMenu
-          isOwn={isOwn}
-          isVisible={isHovered}
-          onReply={() => onReply?.(message)}
-          onThreadReply={() => onOpenThread?.(message)}
-          onEdit={() => setIsEditing(true)}
-          onPin={() => togglePin.mutate(message._id)}
-          onDelete={() => setShowDeleteDialog(true)}
-          onReact={handleReact}
-          hideThreadReply={disableThread}
-        />
+        
 
         {message.pinned && (
           <div className="flex items-center gap-1 text-[11px] text-amber-600">
@@ -194,6 +184,37 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
               isOwn ? "rounded-br-sm bg-blue-600 text-white" : "rounded-bl-sm bg-gray-100 text-gray-900"
             )}
           >
+            {message.replyTo && (
+              <div
+                className={clsx(
+                  "mb-1.5 flex items-center gap-1.5",
+                  isOwn ? "flex-row-reverse" : "flex-row"
+                )}
+              >
+                <div className={clsx("min-w-0 flex-1 truncate whitespace-nowrap rounded-full bg-white px-3 py-1.5 shadow-sm", 
+isOwn ? "rounded-bl-sm" : "rounded-br-sm"
+                )}>
+                  <span
+                    className={clsx(
+                      "text-xs text-gray-700",
+                      message.replyTo.deletedAt && "italic text-gray-400"
+                    )}
+                  >
+                    {message.replyTo.deletedAt
+                      ? "Original message deleted"
+                      : message.replyTo.content}
+                  </span>
+                </div>
+                {!message.replyTo.deletedAt && (
+                  <Avatar
+                    src={message.replyTo.senderId?.avatarUrl}
+                    name={message.replyTo.senderId?.username}
+                    size="sm"
+                    className="shrink-0"
+                  />
+                )}
+              </div>
+            )}
             {message.content}
             {message.editedAt && (
               <span className={clsx("ml-1.5 text-[10px]", isOwn ? "text-blue-100" : "text-gray-400")}>
@@ -231,6 +252,18 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
             )}
           </div>
         )}
+
+        <MessageHoverMenu
+          isOwn={isOwn}
+          isVisible={isHovered}
+          onReply={() => onReply?.(message)}
+          onThreadReply={() => onOpenThread?.(message)}
+          onEdit={() => setIsEditing(true)}
+          onPin={() => togglePin.mutate(message._id)}
+          onDelete={() => setShowDeleteDialog(true)}
+          onReact={handleReact}
+          hideThreadReply={disableThread}
+        />
       </div>
 
       <DeleteConfirmDialog
