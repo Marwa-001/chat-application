@@ -16,6 +16,8 @@ import {
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useReadReceipts } from "@/lib/hooks/useReadReceipts";
 import { useChannelHeader } from "@/lib/hooks/useChannelHeader";
+import LinkPreviewCard from "./LinkPreviewCard";
+import { linkifyText } from "@/lib/utils/linkify";
 
 export default function MessageBubble({ message, isOwn, showAvatar, channelId, onReply, onOpenThread, disableThread, isLastInStack = true }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -215,12 +217,16 @@ isOwn ? "rounded-bl-sm" : "rounded-br-sm"
                 )}
               </div>
             )}
-            {message.content}
+            {message.linkPreview && (
+          <LinkPreviewCard preview={message.linkPreview} isOwn={isOwn} />
+        )}
+            {linkifyText(message.content)}
             {message.editedAt && (
               <span className={clsx("ml-1.5 text-[10px]", isOwn ? "text-blue-100" : "text-gray-400")}>
                 (edited)
               </span>
             )}
+            
           </div>
         )}
 

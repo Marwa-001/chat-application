@@ -1,7 +1,7 @@
 const Message = require("../models/Message");
 const Channel = require("../models/Channel");
 const parseMentions = require("../utils/parseMentions");
-
+const fetchLinkPreview = require("../utils/fetchLinkPreview");
 
 async function sendMessage(req, res, next) {
   try {
@@ -9,11 +9,12 @@ async function sendMessage(req, res, next) {
     const senderId = req.userId;
 
     const mentions = await parseMentions(content);
+    const linkPreview = await fetchLinkPreview(content);
 
     const message = await Message.create({
       channelId, senderId, content,
       contentType: attachments?.length ? "image" : "text",
-      attachments, mentions,
+      attachments, mentions, linkPreview,
       parentMessageId: parentMessageId || null,
       repliedToThreadId: repliedToThreadId || null,
       replyTo: replyTo || null,

@@ -10,6 +10,17 @@ const attachmentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const linkPreviewSchema = new mongoose.Schema(
+  {
+    url: String,
+    title: String,
+    description: String,
+    image: String,
+    siteName: String,
+  },
+  { _id: false }
+);
+
 const reactionSchema = new mongoose.Schema(
   {
     emoji: { type: String, required: true },
@@ -25,6 +36,7 @@ const messageSchema = new mongoose.Schema(
     content: { type: String, default: "" },
     contentType: { type: String, enum: ["text", "image", "file"], default: "text" },
     attachments: [attachmentSchema],
+     linkPreview: { type: linkPreviewSchema, default: null },
     mentions: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     parentMessageId: { type: mongoose.Schema.Types.ObjectId, ref: "Message", default: null },
     threadReplyCount: { type: Number, default: 0 },
