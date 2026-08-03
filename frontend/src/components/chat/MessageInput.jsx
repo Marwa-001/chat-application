@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Plus, Smile } from "lucide-react";
+import { Send, Plus } from "lucide-react";
 import { useSendMessage } from "@/lib/hooks/useSendMessage";
 import { useTyping } from "@/lib/hooks/useTyping";
 import MentionableInput from "./MentionableInput";
+import EmojiPicker from "./EmojiPicker";
 
 export default function MessageInput({ channelId }) {
   const [content, setContent] = useState("");
@@ -15,6 +16,11 @@ export default function MessageInput({ channelId }) {
     setContent(value);
     if (value.trim()) emitTyping();
     else emitStopTyping();
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    setContent((prev) => prev + emoji);
+    emitTyping();
   };
 
   const handleSubmit = (e) => {
@@ -34,7 +40,7 @@ export default function MessageInput({ channelId }) {
       onSubmit={handleSubmit}
       className="flex items-center gap-1.5 border-t border-gray-200 px-2 py-2 sm:gap-2 sm:px-4 sm:py-3"
     >
-      <button type="button" className="hidden shrink-0 text-gray-400 hover:text-gray-600 xs:block">
+      <button type="button" className="shrink-0 text-gray-400 hover:text-gray-600 xs:block">
         <Plus className="h-5 w-5" />
       </button>
 
@@ -45,9 +51,8 @@ export default function MessageInput({ channelId }) {
         className="min-w-0 w-full rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 sm:py-2"
       />
 
-      <button type="button" className="hidden shrink-0 text-gray-400 hover:text-gray-600 sm:block">
-        <Smile className="h-5 w-5" />
-      </button>
+      <EmojiPicker onSelect={handleEmojiSelect} className="hidden shrink-0 sm:block" />
+
       <button
         type="submit"
         disabled={!content.trim() || sendMessage.isPending}
