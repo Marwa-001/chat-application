@@ -37,6 +37,12 @@ export default function AppMenu({ onNewDM, onNewGroup, onMentions }) {
 
       {isOpen && (
         <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-md">
+          
+          <MenuItem
+            icon={AtSign}
+            label="Mentions"
+            onClick={() => { setIsOpen(false); onMentions(); }}
+          />
           <MenuItem
             icon={MessageCircle}
             label="New Direct Message"
@@ -46,11 +52,6 @@ export default function AppMenu({ onNewDM, onNewGroup, onMentions }) {
             icon={Users}
             label="New Group"
             onClick={() => { setIsOpen(false); onNewGroup(); }}
-          />
-          <MenuItem
-            icon={AtSign}
-            label="Mentions"
-            onClick={() => { setIsOpen(false); onMentions(); }}
           />
           <div className="flex items-center justify-between px-3 py-2 text-sm text-gray-700">
             <span className="flex items-center gap-2.5">

@@ -38,8 +38,8 @@ const isMuted = myMembership?.muted;
     onClick={onClick}
     onKeyDown={(e) => { if (e.key === "Enter") onClick(); }}
     className={clsx(
-      "group flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-      isActive ? "border border-blue-500 bg-white" : "border border-transparent hover:bg-gray-50"
+      "group flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left transition-colors",
+       isActive ? "bg-[#DBDDE1]" : "hover:bg-gray-50"
     )}
   >
     <Avatar

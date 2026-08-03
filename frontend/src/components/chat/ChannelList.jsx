@@ -41,7 +41,7 @@ export default function ChannelList({ activeChannelId, onSelectChannel, onSelect
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-gray-200 p-2 sm:p-3">
+      <div className="flex items-center gap-2 border-b border-gray-200 p-2 sm:p-3.5">
         {mode === "mentions" ? (
           <>
             <button
@@ -66,7 +66,7 @@ export default function ChannelList({ activeChannelId, onSelectChannel, onSelect
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search"
-                className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-8 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 sm:py-2"
+                className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-8 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 sm:py-2"
               />
               {searchTerm && (
                 <button
@@ -82,7 +82,7 @@ export default function ChannelList({ activeChannelId, onSelectChannel, onSelect
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto p-1.5 sm:p-2">
+      <div className="flex-1 overflow-y-auto">
         {mode === "mentions" ? (
           <MentionsView onSelect={handleMentionSelect} />
         ) : isSearchMode ? (
