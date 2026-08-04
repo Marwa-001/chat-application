@@ -66,7 +66,7 @@ const isMuted = myMembership?.muted;
               : "Say hi 👋"}
         </p>
         {hasUnread && (
-          <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#E0F0FF] px-1.5 text-[11px] font-semibold text-white">
+          <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#FF3742] px-1.5 text-[11px] font-semibold text-white">
             {channel?.unreadCount}
           </span>
         )}

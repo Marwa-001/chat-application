@@ -101,10 +101,11 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
 
   return (
     <div
-      className={clsx("group relative flex items-end gap-2", isOwn && "flex-row-reverse")}
+      className={clsx("group relative flex flex-col gap-0.5", isOwn && "items-end")}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      <div className={clsx("flex items-end gap-2", isOwn && "flex-row-reverse")}>
       {!isOwn && (
         <div className="w-7 shrink-0 sm:w-8">
           {isLastInStack && (
@@ -180,6 +181,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
             </button>
           </div>
         ) : (
+          <div className="relative">
           <div
             className={clsx(
               "break-words rounded-2xl px-3.5 py-2 text-sm text-gray-900",
@@ -228,6 +230,18 @@ isOwn ? "rounded-bl-sm" : "rounded-br-sm"
             )}
             
           </div>
+          <MessageHoverMenu
+      isOwn={isOwn}
+      isVisible={isHovered}
+      onReply={() => onReply?.(message)}
+      onThreadReply={() => onOpenThread?.(message)}
+      onEdit={() => setIsEditing(true)}
+      onPin={() => togglePin.mutate(message._id)}
+      onDelete={() => setShowDeleteDialog(true)}
+      onReact={handleReact}
+      hideThreadReply={disableThread}
+    />
+    </div>
         )}
 
         {!disableThread && message.threadReplyCount > 0 && (
@@ -239,7 +253,7 @@ isOwn ? "rounded-bl-sm" : "rounded-br-sm"
           </button>
         )}
 
-        {/* Timestamp only on the last message in the stack */}
+        {/* Timestamp only on the last message in the stack
         {isLastInStack && (
           <div className="flex items-center gap-1">
             <span className="text-[11px] text-gray-400">{time}</span>
@@ -257,9 +271,9 @@ isOwn ? "rounded-bl-sm" : "rounded-br-sm"
               </span>
             )}
           </div>
-        )}
+        )} */}
 
-        <MessageHoverMenu
+        {/* <MessageHoverMenu
           isOwn={isOwn}
           isVisible={isHovered}
           onReply={() => onReply?.(message)}
@@ -269,8 +283,22 @@ isOwn ? "rounded-bl-sm" : "rounded-br-sm"
           onDelete={() => setShowDeleteDialog(true)}
           onReact={handleReact}
           hideThreadReply={disableThread}
-        />
+        /> */}
       </div>
+      </div>
+
+      {isLastInStack && (
+  <div className={clsx("flex items-center gap-1", !isOwn && "pl-9 sm:pl-10")}>
+    <span className="text-[11px] text-gray-400">{time}</span>
+    {readStatus === "sent" && <Check className="h-3 w-3 text-gray-400" />}
+    {readStatus === "read" && <CheckCheck className="h-3 w-3 text-blue-500" />}
+    {readStatus && typeof readStatus === "object" && (
+      <span className="text-[10px] text-gray-400">
+        {readStatus.seenCount > 0 ? `Seen by ${readStatus.seenCount}/${readStatus.total}` : ""}
+      </span>
+    )}
+  </div>
+)}
 
       <DeleteConfirmDialog
         isOpen={showDeleteDialog}
