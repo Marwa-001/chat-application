@@ -9,6 +9,7 @@ import ThreadReplyInput from "./ThreadReplyInput";
 export default function ThreadPanel({ channelId, parentMessage, onClose }) {
   const { data: replies, isLoading } = useThreadMessages(channelId, parentMessage._id);
   const { user } = useAuth();
+  const GROUP_THRESHOLD_MS = 1 * 60 * 1000;
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -41,7 +42,10 @@ export default function ThreadPanel({ channelId, parentMessage, onClose }) {
           <div className="space-y-3">
             {replies.map((reply, i) => {
               const next = replies[i + 1];
-              const isLastInStack = !next || next.senderId?._id !== reply.senderId?._id;
+              const isLastInStack =
+                !next ||
+                next.senderId?._id !== reply.senderId?._id ||
+                new Date(next.createdAt) - new Date(reply.createdAt) > GROUP_THRESHOLD_MS;
               return (
                 <MessageBubble
                   key={reply._id}

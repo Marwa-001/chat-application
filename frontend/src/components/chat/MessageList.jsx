@@ -60,14 +60,24 @@ export default function MessageList({ channelId, onReply, onOpenThread, highligh
     );
   }
 
+  const GROUP_THRESHOLD_MS = 1 * 60 * 1000;
+
   return (
     <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
       {messages.map((message, i) => {
         const isOwn = message.senderId?._id === user?.id;
         const prev = messages[i - 1];
         const next = messages[i + 1];
-        const isFirstInStack = !prev || prev.senderId?._id !== message.senderId?._id;
-        const isLastInStack = !next || next.senderId?._id !== message.senderId?._id;
+
+        const isFirstInStack =
+          !prev ||
+          prev.senderId?._id !== message.senderId?._id ||
+          new Date(message.createdAt) - new Date(prev.createdAt) > GROUP_THRESHOLD_MS;
+
+        const isLastInStack =
+          !next ||
+          next.senderId?._id !== message.senderId?._id ||
+          new Date(next.createdAt) - new Date(message.createdAt) > GROUP_THRESHOLD_MS;
 
         return (
           <div
