@@ -1,5 +1,3 @@
-const path = require("path");
-
 async function uploadFiles(req, res, next) {
   try {
     const files = req.files || [];
@@ -8,13 +6,16 @@ async function uploadFiles(req, res, next) {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
     const attachments = files.map((f) => {
-      const isImage = f.mimetype.startsWith("image/");
+      let type = "file";
+      if (f.mimetype.startsWith("image/")) type = "image";
+      else if (f.mimetype.startsWith("video/")) type = "video"; // NEW
+
       return {
         url: `${baseUrl}/uploads/${f.filename}`,
         name: f.originalname,
         size: f.size,
         mimeType: f.mimetype,
-        type: isImage ? "image" : "file",
+        type,
       };
     });
 

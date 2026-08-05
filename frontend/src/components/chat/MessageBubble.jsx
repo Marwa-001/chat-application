@@ -19,7 +19,7 @@ import { useChannelHeader } from "@/lib/hooks/useChannelHeader";
 import LinkPreviewCard from "./LinkPreviewCard";
 import { linkifyText } from "@/lib/utils/linkify";
 
-import AttachmentGrid from "./AttachmentGrid";
+import MediaGrid from "./MediaGrid"; // NEW, replaces AttachmentGrid
 import FileAttachmentCard from "./FileAttachmentCard";
 import ImageLightbox from "./ImageLightbox";
 
@@ -189,80 +189,81 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
             <div className="relative">
               <div
                 className={clsx(
-                  "break-words rounded-2xl text-sm text-gray-900",
+                  "break-words rounded-2xl text-sm text-gray-900 py-1 px-1",
                   isOwn ? "rounded-br-sm bg-[#E0F0FF]" : "rounded-bl-sm bg-gray-100"
                 )}
               >
+                {/* 1. Scraped link content always on top */}
+                {message.linkPreviews?.length > 0 && (
+                  <LinkPreviewCard previews={message.linkPreviews} isOwn={isOwn} />
+                )}
 
-                {message.attachments?.some((a) => a.type === "image") && (
-                  <AttachmentGrid
-                    attachments={message.attachments.filter((a) => a.type === "image")}
+                {/* 2 & 3. Images and videos share one media grid */}
+                {message.attachments?.some((a) => a.type === "image" || a.type === "video") && (
+                  <MediaGrid
+                    attachments={message.attachments.filter(
+                      (a) => a.type === "image" || a.type === "video"
+                    )}
                     onImageClick={(images, startIndex) => setLightbox({ images, startIndex })}
                   />
                 )}
-                {message.linkPreview && (
-                    <LinkPreviewCard preview={message.linkPreview} isOwn={isOwn} />
-                  )}
 
-
-{(message.content || message.replyTo || message.linkPreview || message.editedAt ||
-  message.attachments?.some((a) => a.type === "file")) &&(
-
-                <div className="px-3.5 py-2">
-                  {message.replyTo && (
-                    <div
-                      className={clsx(
-                        "mb-1.5 flex items-center gap-1.5",
-                        isOwn ? "flex-row-reverse" : "flex-row"
-                      )}
-                    >
-                      <div className={clsx("min-w-0 flex-1 truncate whitespace-nowrap rounded-full bg-white px-3 py-1.5 shadow-sm",
-                        isOwn ? "rounded-bl-sm" : "rounded-br-sm"
-                      )}>
-                        <span
-                          className={clsx(
-                            "text-xs text-gray-700",
-                            message.replyTo.deletedAt && "italic text-gray-400"
-                          )}
-                        >
-                          {message.replyTo.deletedAt
-                            ? "Original message deleted"
-                            : message.replyTo.content}
-                        </span>
+                {(message.content || message.replyTo || message.linkPreviews?.length || message.editedAt ||
+                  message.attachments?.some((a) => a.type === "file")) && (
+                  <div className="px-3.5 py-2">
+                    {message.replyTo && (
+                      <div
+                        className={clsx(
+                          "mb-1.5 flex items-center gap-1.5",
+                          isOwn ? "flex-row-reverse" : "flex-row"
+                        )}
+                      >
+                        <div className={clsx("min-w-0 flex-1 truncate whitespace-nowrap rounded-full bg-white px-3 py-1.5 shadow-sm",
+                          isOwn ? "rounded-bl-sm" : "rounded-br-sm"
+                        )}>
+                          <span
+                            className={clsx(
+                              "text-xs text-gray-700",
+                              message.replyTo.deletedAt && "italic text-gray-400"
+                            )}
+                          >
+                            {message.replyTo.deletedAt
+                              ? "Original message deleted"
+                              : message.replyTo.content}
+                          </span>
+                        </div>
+                        {!message.replyTo.deletedAt && (
+                          <Avatar
+                            src={message.replyTo.senderId?.avatarUrl}
+                            name={message.replyTo.senderId?.username}
+                            size="sm"
+                            className="shrink-0"
+                          />
+                        )}
                       </div>
-                      {!message.replyTo.deletedAt && (
-                        <Avatar
-                          src={message.replyTo.senderId?.avatarUrl}
-                          name={message.replyTo.senderId?.username}
-                          size="sm"
-                          className="shrink-0"
-                        />
-                      )}
-                    </div>
-                  )}
-                  
+                    )}
 
+                    {/* 4. Files */}
+                    {message.attachments?.filter((a) => a.type === "file").length > 0 && (
+                      <div className="mb-1.5 space-y-1.5">
+                        {message.attachments
+                          .filter((a) => a.type === "file")
+                          .map((att) => (
+                            <FileAttachmentCard key={att.url} attachment={att} />
+                          ))}
+                      </div>
+                    )}
 
+                    {/* 5. Text and links */}
+                    {linkifyText(message.content)}
+                    {message.editedAt && (
+                      <span className={clsx("ml-1.5 text-[10px]", isOwn ? "text-blue-100" : "text-gray-400")}>
+                        (edited)
+                      </span>
+                    )}
+                  </div>
+                )}
 
-                  {message.attachments?.filter((a) => a.type === "file").length > 0 && (
-                    <div className="mb-1.5 space-y-1.5">
-                      {message.attachments
-                        .filter((a) => a.type === "file")
-                        .map((att) => (
-                          <FileAttachmentCard key={att.url} attachment={att} />
-                        ))}
-                    </div>
-                  )}
-
-                  {linkifyText(message.content)}
-                  {message.editedAt && (
-                    <span className={clsx("ml-1.5 text-[10px]", isOwn ? "text-blue-100" : "text-gray-400")}>
-                      (edited)
-                    </span>
-                  )}
-
-                </div>
-  )}
                 <MessageHoverMenu
                   isOwn={isOwn}
                   isVisible={isHovered}
@@ -339,6 +340,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
           images={lightbox.images}
           startIndex={lightbox.startIndex}
           sender={message.senderId}
+          caption={message.content} 
           subtitle={new Date(message.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
           onClose={() => setLightbox(null)}
         />

@@ -9,12 +9,16 @@ async function sendMessage(req, res, next) {
     const senderId = req.userId;
 
     const mentions = await parseMentions(content);
-    const linkPreview = await fetchLinkPreview(content);
+    const linkPreviews = await fetchLinkPreview(content); // now an array
 
     const message = await Message.create({
       channelId, senderId, content,
-      contentType: attachments?.some(a => a.type === "image") ? "image" : attachments?.length ? "file" : "text",
-      attachments, mentions, linkPreview,
+      contentType: attachments?.some(a => a.type === "image")
+        ? "image"
+        : attachments?.some(a => a.type === "video")
+        ? "video"
+        : attachments?.length ? "file" : "text",
+      attachments, mentions, linkPreviews,
       parentMessageId: parentMessageId || null,
       repliedToThreadId: repliedToThreadId || null,
       replyTo: replyTo || null,

@@ -5,10 +5,11 @@ const attachmentSchema = new mongoose.Schema(
     url: String,
     name: String,
     size: Number,
-    type: { type: String, enum: ["image", "file"] },
+    type: { type: String, enum: ["image", "video", "file"] }, // added "video"
     mimeType: String,
     width: Number,
     height: Number,
+    duration: Number, // NEW: video duration in seconds, set client-side or via ffprobe later
   },
   { _id: false }
 );
@@ -16,10 +17,24 @@ const attachmentSchema = new mongoose.Schema(
 const linkPreviewSchema = new mongoose.Schema(
   {
     url: String,
+    contentType: { type: String, enum: ["audio", "generic"], default: "generic" }, // NEW
     title: String,
     description: String,
     image: String,
     siteName: String,
+    artist: String,       // NEW
+    album: String,        // NEW
+    releaseYear: String,  // NEW
+    duration: Number,     // NEW: track duration in seconds
+    tracks: [             // NEW: for album/playlist links
+      {
+        _id: false,
+        title: String,
+        artist: String,
+        duration: Number,
+        trackNumber: Number,
+      },
+    ],
   },
   { _id: false }
 );
@@ -37,9 +52,9 @@ const messageSchema = new mongoose.Schema(
     channelId: { type: mongoose.Schema.Types.ObjectId, ref: "Channel", required: true },
     senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     content: { type: String, default: "" },
-    contentType: { type: String, enum: ["text", "image", "file"], default: "text" },
+    contentType: { type: String, enum: ["text", "image", "file", "video"], default: "text" },
     attachments: [attachmentSchema],
-     linkPreview: { type: linkPreviewSchema, default: null },
+    linkPreviews: [linkPreviewSchema],  
     mentions: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     parentMessageId: { type: mongoose.Schema.Types.ObjectId, ref: "Message", default: null },
     threadReplyCount: { type: Number, default: 0 },
