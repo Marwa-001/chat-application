@@ -133,7 +133,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
               onClick={() => onOpenThread?.(message.repliedToThreadId)}
               className="mb-1 flex flex-col items-start gap-0.5 text-left"
             >
-              <span className="flex items-center gap-1 text-[11px] text-gray-400">
+              <span className="flex items-center gap-1 text-[11px] text-gray-400 whitespace-nowrap">
                 <MessageSquareText className="h-3 w-3" />
                 Replied to a thread
               </span>
@@ -144,7 +144,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
           )}
 
           {message.alsoSentToMainId && (
-            <div className="mb-1 flex items-center gap-1 text-[11px] text-gray-400">
+            <div className="mb-1 flex items-center gap-1 text-[11px] text-gray-400 whitespace-nowrap">
               <MessageSquareText className="h-3 w-3" />
               Also sent to the channel
             </div>
@@ -189,83 +189,92 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
             <div className="relative">
               <div
                 className={clsx(
-                  "break-words rounded-2xl px-3.5 py-2 text-sm text-gray-900",
+                  "break-words rounded-2xl text-sm text-gray-900",
                   isOwn ? "rounded-br-sm bg-[#E0F0FF]" : "rounded-bl-sm bg-gray-100"
                 )}
               >
-                {message.replyTo && (
-                  <div
-                    className={clsx(
-                      "mb-1.5 flex items-center gap-1.5",
-                      isOwn ? "flex-row-reverse" : "flex-row"
-                    )}
-                  >
-                    <div className={clsx("min-w-0 flex-1 truncate whitespace-nowrap rounded-full bg-white px-3 py-1.5 shadow-sm",
-                      isOwn ? "rounded-bl-sm" : "rounded-br-sm"
-                    )}>
-                      <span
-                        className={clsx(
-                          "text-xs text-gray-700",
-                          message.replyTo.deletedAt && "italic text-gray-400"
-                        )}
-                      >
-                        {message.replyTo.deletedAt
-                          ? "Original message deleted"
-                          : message.replyTo.content}
-                      </span>
-                    </div>
-                    {!message.replyTo.deletedAt && (
-                      <Avatar
-                        src={message.replyTo.senderId?.avatarUrl}
-                        name={message.replyTo.senderId?.username}
-                        size="sm"
-                        className="shrink-0"
-                      />
-                    )}
-                  </div>
-                )}
-                {message.linkPreview && (
-                  <LinkPreviewCard preview={message.linkPreview} isOwn={isOwn} />
-                )}
 
                 {message.attachments?.some((a) => a.type === "image") && (
-                  <div className="mb-1.5">
-                    <AttachmentGrid
-                      attachments={message.attachments.filter((a) => a.type === "image")}
-                      onImageClick={(images, startIndex) => setLightbox({ images, startIndex })}
-                    />
-                  </div>
+                  <AttachmentGrid
+                    attachments={message.attachments.filter((a) => a.type === "image")}
+                    onImageClick={(images, startIndex) => setLightbox({ images, startIndex })}
+                  />
                 )}
+                {message.linkPreview && (
+                    <LinkPreviewCard preview={message.linkPreview} isOwn={isOwn} />
+                  )}
 
-                {message.attachments?.filter((a) => a.type === "file").length > 0 && (
-                  <div className="mb-1.5 space-y-1.5">
-                    {message.attachments
-                      .filter((a) => a.type === "file")
-                      .map((att) => (
-                        <FileAttachmentCard key={att.url} attachment={att} />
-                      ))}
-                  </div>
-                )}
 
-                {linkifyText(message.content)}
-                {message.editedAt && (
-                  <span className={clsx("ml-1.5 text-[10px]", isOwn ? "text-blue-100" : "text-gray-400")}>
-                    (edited)
-                  </span>
-                )}
+{(message.content || message.replyTo || message.linkPreview || message.editedAt ||
+  message.attachments?.some((a) => a.type === "file")) &&(
 
+                <div className="px-3.5 py-2">
+                  {message.replyTo && (
+                    <div
+                      className={clsx(
+                        "mb-1.5 flex items-center gap-1.5",
+                        isOwn ? "flex-row-reverse" : "flex-row"
+                      )}
+                    >
+                      <div className={clsx("min-w-0 flex-1 truncate whitespace-nowrap rounded-full bg-white px-3 py-1.5 shadow-sm",
+                        isOwn ? "rounded-bl-sm" : "rounded-br-sm"
+                      )}>
+                        <span
+                          className={clsx(
+                            "text-xs text-gray-700",
+                            message.replyTo.deletedAt && "italic text-gray-400"
+                          )}
+                        >
+                          {message.replyTo.deletedAt
+                            ? "Original message deleted"
+                            : message.replyTo.content}
+                        </span>
+                      </div>
+                      {!message.replyTo.deletedAt && (
+                        <Avatar
+                          src={message.replyTo.senderId?.avatarUrl}
+                          name={message.replyTo.senderId?.username}
+                          size="sm"
+                          className="shrink-0"
+                        />
+                      )}
+                    </div>
+                  )}
+                  
+
+
+
+                  {message.attachments?.filter((a) => a.type === "file").length > 0 && (
+                    <div className="mb-1.5 space-y-1.5">
+                      {message.attachments
+                        .filter((a) => a.type === "file")
+                        .map((att) => (
+                          <FileAttachmentCard key={att.url} attachment={att} />
+                        ))}
+                    </div>
+                  )}
+
+                  {linkifyText(message.content)}
+                  {message.editedAt && (
+                    <span className={clsx("ml-1.5 text-[10px]", isOwn ? "text-blue-100" : "text-gray-400")}>
+                      (edited)
+                    </span>
+                  )}
+
+                </div>
+  )}
+                <MessageHoverMenu
+                  isOwn={isOwn}
+                  isVisible={isHovered}
+                  onReply={() => onReply?.(message)}
+                  onThreadReply={() => onOpenThread?.(message)}
+                  onEdit={() => setIsEditing(true)}
+                  onPin={() => togglePin.mutate(message._id)}
+                  onDelete={() => setShowDeleteDialog(true)}
+                  onReact={handleReact}
+                  hideThreadReply={disableThread}
+                />
               </div>
-              <MessageHoverMenu
-                isOwn={isOwn}
-                isVisible={isHovered}
-                onReply={() => onReply?.(message)}
-                onThreadReply={() => onOpenThread?.(message)}
-                onEdit={() => setIsEditing(true)}
-                onPin={() => togglePin.mutate(message._id)}
-                onDelete={() => setShowDeleteDialog(true)}
-                onReact={handleReact}
-                hideThreadReply={disableThread}
-              />
             </div>
           )}
 
