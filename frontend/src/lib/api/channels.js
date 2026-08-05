@@ -19,3 +19,8 @@ export async function markAsRead(channelId, lastReadMessageId) {
   const res = await api.post(`/channels/${channelId}/read`, { lastReadMessageId });
   return res.data;
 }
+
+export async function getChannelReads(channelId) {
+  const res = await api.get(`/channels/${channelId}/reads`);
+  return res.data; // { [userId]: lastReadMessageId }
+}

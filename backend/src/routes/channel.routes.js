@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth.middleware");
-const { getMyChannels, createDM, createGroup, markAsRead, toggleMute } = require("../controllers/channel.controller");
+const { getMyChannels, createDM, createGroup, markAsRead, toggleMute, getChannelReads } = require("../controllers/channel.controller");
 
 router.use(auth); // all channel routes require login
 
@@ -9,5 +9,6 @@ router.post("/dm", createDM);
 router.post("/group", createGroup);
 router.post("/:channelId/read", markAsRead);
 router.post("/:channelId/mute", toggleMute);
+router.get("/:channelId/reads", getChannelReads);
 
 module.exports = router;

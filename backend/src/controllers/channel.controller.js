@@ -142,4 +142,18 @@ async function toggleMute(req, res, next) {
   }
 }
 
-module.exports = { getMyChannels, createDM, createGroup, markAsRead, toggleMute };
+// backend/src/controllers/channel.controller.js
+async function getChannelReads(req, res, next) {
+  try {
+    const { channelId } = req.params;
+    const reads = await Read.find({ channelId }).select("userId lastReadMessageId");
+    const map = Object.fromEntries(
+      reads.map((r) => [r.userId.toString(), r.lastReadMessageId?.toString() || null])
+    );
+    res.json(map);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getMyChannels, createDM, createGroup, markAsRead, toggleMute, getChannelReads };

@@ -1,13 +1,12 @@
-"use client";
-
+// frontend/src/lib/hooks/useReadReceipts.js
 import { useQuery } from "@tanstack/react-query";
+import { getChannelReads } from "@/lib/api/channels";
 
 export function useReadReceipts(channelId) {
   return useQuery({
     queryKey: ["readReceipts", channelId],
-    queryFn: () => ({}), // populated only via socket events; no initial fetch
-    enabled: false,
-    initialData: {},
+    queryFn: () => getChannelReads(channelId),
+    enabled: !!channelId,
     staleTime: Infinity,
   });
 }
