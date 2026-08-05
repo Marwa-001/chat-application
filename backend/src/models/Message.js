@@ -3,7 +3,10 @@ const mongoose = require("mongoose");
 const attachmentSchema = new mongoose.Schema(
   {
     url: String,
+    name: String,
+    size: Number,
     type: { type: String, enum: ["image", "file"] },
+    mimeType: String,
     width: Number,
     height: Number,
   },

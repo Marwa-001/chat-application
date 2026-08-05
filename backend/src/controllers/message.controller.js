@@ -13,7 +13,7 @@ async function sendMessage(req, res, next) {
 
     const message = await Message.create({
       channelId, senderId, content,
-      contentType: attachments?.length ? "image" : "text",
+      contentType: attachments?.some(a => a.type === "image") ? "image" : attachments?.length ? "file" : "text",
       attachments, mentions, linkPreview,
       parentMessageId: parentMessageId || null,
       repliedToThreadId: repliedToThreadId || null,
