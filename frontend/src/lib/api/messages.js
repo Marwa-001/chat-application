@@ -1,8 +1,8 @@
 import api from "./axios";
 
-export async function getMessages(channelId, { before, parentMessageId } = {}) {
+export async function getMessages(channelId, { before, parentMessageId, around } = {}) {
   const res = await api.get(`/messages/${channelId}`, {
-    params: { before, parentMessageId },
+    params: { before, parentMessageId, around },
   });
   return res.data;
 }

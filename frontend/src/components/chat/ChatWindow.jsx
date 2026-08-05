@@ -15,7 +15,8 @@ import { getSocket } from "@/lib/socket";
 
 export default function ChatWindow({ channelId, onBack, highlightMessageId, onHighlighted }) {
   const { channel, displayName, avatar } = useChannelHeader(channelId);
-  const { data: messages } = useMessages(channelId);
+  const { data } = useMessages(channelId, { around: highlightMessageId || undefined });
+  const messages = data?.pages.slice().reverse().flat() ?? [];
   const markAsRead = useMarkAsRead();
   const { typingUsers } = useTyping(channelId);
   const [activeThreadMessage, setActiveThreadMessage] = useState(null);

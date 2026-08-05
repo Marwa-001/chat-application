@@ -8,11 +8,34 @@ import MessageBubble from "./MessageBubble";
 import clsx from "clsx";
 
 export default function MessageList({ channelId, onReply, onOpenThread, highlightMessageId, onHighlighted }) {
-  const { data: messages, isLoading, isError } = useMessages(channelId);
+  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useMessages(channelId);
+const messages = data?.pages.slice().reverse().flat() ?? [];
   const { user } = useAuth();
   const bottomRef = useRef(null);
   const messageRefs = useRef({});
   const [flashId, setFlashId] = useState(null);
+
+  const scrollContainerRef = useRef(null);
+const prevScrollHeightRef = useRef(0);
+
+const handleScroll = () => {
+  const el = scrollContainerRef.current;
+  if (!el || isFetchingNextPage || !hasNextPage) return;
+
+  if (el.scrollTop < 100) {
+    prevScrollHeightRef.current = el.scrollHeight;
+    fetchNextPage();
+  }
+};
+
+useEffect(() => {
+  const el = scrollContainerRef.current;
+  if (!el || !prevScrollHeightRef.current) return;
+  // restore position: keep the same messages in view after prepend
+  const diff = el.scrollHeight - prevScrollHeightRef.current;
+  el.scrollTop += diff;
+  prevScrollHeightRef.current = 0;
+}, [data?.pages.length]);
 
   useEffect(() => {
     if (!highlightMessageId) return;
@@ -35,6 +58,23 @@ export default function MessageList({ channelId, onReply, onOpenThread, highligh
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const prevLastIdRef = useRef(null);
+
+useEffect(() => {
+  if (!messages.length || highlightMessageId) return;
+  const lastId = messages[messages.length - 1]._id;
+  if (lastId !== prevLastIdRef.current) {
+    // only autoscroll if this is a genuinely new last message
+    // (i.e. not just an older page prepended)
+    const isInitialLoad = prevLastIdRef.current === null;
+    const isNewMessage = prevLastIdRef.current !== null && lastId !== prevLastIdRef.current;
+    if (isInitialLoad || isNewMessage) {
+      bottomRef.current?.scrollIntoView({ behavior: isInitialLoad ? "auto" : "smooth" });
+    }
+    prevLastIdRef.current = lastId;
+  }
+}, [messages, highlightMessageId]);
 
   if (isLoading) {
     return (
@@ -62,8 +102,20 @@ export default function MessageList({ channelId, onReply, onOpenThread, highligh
 
   const GROUP_THRESHOLD_MS = 1 * 60 * 1000;
 
+
+  console.log({ pagesLoaded: data?.pages.length, hasNextPage, isFetchingNextPage, totalMessages: messages.length });
+
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
+    <div
+  ref={scrollContainerRef}
+  onScroll={handleScroll}
+  className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4"
+>
+  {isFetchingNextPage && (
+    <div className="flex justify-center py-2">
+      <Loader2 className="h-4 w-4 animate-spin text-gray-300" />
+    </div>
+  )}
       {messages.map((message, i) => {
         const isOwn = message.senderId?._id === user?.id;
         const prev = messages[i - 1];
@@ -85,7 +137,7 @@ export default function MessageList({ channelId, onReply, onOpenThread, highligh
             ref={(el) => { messageRefs.current[message._id] = el; }}
             className={clsx(
               isFirstInStack ? "mt-3" : "mt-0.5",
-              flashId === message._id && "rounded-lg bg-yellow-50 transition-colors duration-1000"
+              flashId === message._id && "rounded-lg bg-[#FFF9E5] transition-colors duration-1000"
             )}
           >
             <MessageBubble

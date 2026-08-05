@@ -5,6 +5,31 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getSocket, disconnectSocket } from "@/lib/socket";
 import { useAuth } from "./useAuth";
 
+// --- helpers defined OUTSIDE the component/hook ---
+function appendToFirstPage(old, message) {
+  if (!old?.pages?.length) return old;
+  const alreadyExists = old.pages.some((page) => page.some((m) => m._id === message._id));
+  if (alreadyExists) return old;
+
+  const pages = [...old.pages];
+  pages[0] = [...pages[0], message]; // pages[0] is always the newest-fetched page
+  return { ...old, pages };
+}
+
+function mapInPages(old, predicate, mapper) {
+  if (!old?.pages?.length) return old;
+  return {
+    ...old,
+    pages: old.pages.map((page) => page.map((m) => (predicate(m) ? mapper(m) : m))),
+  };
+}
+
+function filterInPages(old, predicate) {
+  if (!old?.pages?.length) return old;
+  return { ...old, pages: old.pages.map((page) => page.filter(predicate)) };
+}
+// --- end helpers ---
+
 export function useSocket() {
   const { token, isHydrated } = useAuth();
   const queryClient = useQueryClient();
@@ -19,54 +44,45 @@ export function useSocket() {
       if (message.parentMessageId) {
         queryClient.setQueryData(
           ["messages", message.channelId, "thread", message.parentMessageId],
-          (old) => {
-            if (!old) return old;
-            if (old.some((m) => m._id === message._id)) return old;
-            return [...old, message];
-          }
+          (old) => appendToFirstPage(old, message)
         );
-        queryClient.setQueryData(["messages", message.channelId, "main"], (old) => {
-          if (!old) return old;
-          return old.map((m) =>
-            m._id === message.parentMessageId
-              ? {
-                ...m,
-                threadReplyCount: (m.threadReplyCount || 0) + 1,
-                threadLastReplyAt: message.createdAt,
-              }
-              : m
-          );
-        });
+        queryClient.setQueryData(["messages", message.channelId, "main"], (old) =>
+          mapInPages(
+            old,
+            (m) => m._id === message.parentMessageId,
+            (m) => ({ ...m, threadReplyCount: (m.threadReplyCount || 0) + 1, threadLastReplyAt: message.createdAt })
+          )
+        );
       } else {
-        queryClient.setQueryData(["messages", message.channelId, "main"], (old) => {
-          if (!old) return old;
-          if (old.some((m) => m._id === message._id)) return old;
-          return [...old, message];
-        });
+        queryClient.setQueryData(["messages", message.channelId, "main"], (old) =>
+          appendToFirstPage(old, message)
+        );
       }
       queryClient.invalidateQueries({ queryKey: ["channels"] });
     };
 
     const handleMessageUpdated = (message) => {
-      queryClient.setQueriesData({ queryKey: ["messages", message.channelId] }, (old) => {
-        if (!old) return old;
-        return old.map((m) => (m._id === message._id ? message : m));
-      });
+      queryClient.setQueriesData({ queryKey: ["messages", message.channelId] }, (old) =>
+        mapInPages(old, (m) => m._id === message._id, () => message)
+      );
     };
 
     const handleMessageDeleted = ({ messageId }) => {
-      queryClient.setQueriesData({ queryKey: ["messages"] }, (old) => {
-        if (!old) return old;
-        return old.filter((m) => m._id !== messageId);
-      });
+      queryClient.setQueriesData({ queryKey: ["messages"] }, (old) =>
+        filterInPages(old, (m) => m._id !== messageId)
+      );
     };
 
-    // NEW: reactions were never wired up before
     const handleReactionUpdated = ({ messageId, reactions }) => {
-      queryClient.setQueriesData({ queryKey: ["messages"] }, (old) => {
-        if (!old) return old;
-        return old.map((m) => (m._id === messageId ? { ...m, reactions } : m));
-      });
+      queryClient.setQueriesData({ queryKey: ["messages"] }, (old) =>
+        mapInPages(old, (m) => m._id === messageId, (m) => ({ ...m, reactions }))
+      );
+    };
+
+    const handleMessageLinkUpdated = ({ messageId, alsoSentToMainId }) => {
+      queryClient.setQueriesData({ queryKey: ["messages"] }, (old) =>
+        mapInPages(old, (m) => m._id === messageId, (m) => ({ ...m, alsoSentToMainId }))
+      );
     };
 
     const handlePresenceUpdate = ({ userId, status }) => {
@@ -89,7 +105,6 @@ export function useSocket() {
         if (old.some((c) => c._id === channel._id)) return old;
         return [channel, ...old];
       });
-      // join this room immediately so subsequent messages arrive live too
       socket.emit("channel:join", { channelId: channel._id });
     };
 
@@ -98,13 +113,6 @@ export function useSocket() {
         ...(old || {}),
         [userId]: lastReadMessageId,
       }));
-    };
-
-    const handleMessageLinkUpdated = ({ messageId, alsoSentToMainId }) => {
-      queryClient.setQueriesData({ queryKey: ["messages"] }, (old) => {
-        if (!old) return old;
-        return old.map((m) => (m._id === messageId ? { ...m, alsoSentToMainId } : m));
-      });
     };
 
     const handleChannelUpdated = ({ channelId }) => {

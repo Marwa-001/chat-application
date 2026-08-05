@@ -60,7 +60,30 @@ async function sendMessage(req, res, next) {
 async function getMessages(req, res, next) {
   try {
     const { channelId } = req.params;
-    const { before, limit = 30, parentMessageId = null } = req.query;
+    const { before, limit = 30, parentMessageId = null, around } = req.query;
+
+    if (around) {
+      const target = await Message.findOne({ _id: around, channelId }).lean();
+      if (!target) return res.status(404).json({ message: "Message not found" });
+
+      const half = Math.floor(Number(limit) / 2);
+
+      const olderMessages = await Message.find({
+        channelId, parentMessageId: target.parentMessageId, deletedAt: null,
+        _id: { $lte: around },
+      }).sort({ _id: -1 }).limit(half + 1)
+        .populate("senderId", "username avatarUrl")
+        .populate({ path: "replyTo", select: "content senderId deletedAt", populate: { path: "senderId", select: "username" } });
+
+      const newerMessages = await Message.find({
+        channelId, parentMessageId: target.parentMessageId, deletedAt: null,
+        _id: { $gt: around },
+      }).sort({ _id: 1 }).limit(half)
+        .populate("senderId", "username avatarUrl")
+        .populate({ path: "replyTo", select: "content senderId deletedAt", populate: { path: "senderId", select: "username" } });
+
+      return res.json([...olderMessages.reverse(), ...newerMessages]);
+    }
 
     const query = { channelId, parentMessageId: parentMessageId || null, deletedAt: null };
     if (before) query._id = { $lt: before };
