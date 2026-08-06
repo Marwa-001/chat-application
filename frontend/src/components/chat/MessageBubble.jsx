@@ -119,7 +119,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, channelId, o
           </div>
         )}
 
-        <div className={clsx("relative flex max-w-[85% ] flex-col gap-0.5 sm:max-w-[70%]", isOwn && "items-end")}>
+        <div className={clsx("relative flex max-w-[85%] flex-col gap-0.5 sm:max-w-[70%]", isOwn && "items-end")}>
 
 
           {message.pinned && (
