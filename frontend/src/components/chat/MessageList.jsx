@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+// import { Loader2 } from "lucide-react";
 import { useMessages } from "@/lib/hooks/useMessages";
 import { useAuth } from "@/lib/hooks/useAuth";
 import MessageBubble from "./MessageBubble";
 import clsx from "clsx";
+import { Loader2, ChevronDown } from "lucide-react";
 
 export default function MessageList({ channelId, onReply, onOpenThread, highlightMessageId, onHighlighted }) {
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useMessages(channelId);
@@ -15,17 +16,26 @@ const messages = data?.pages.slice().reverse().flat() ?? [];
   const messageRefs = useRef({});
   const [flashId, setFlashId] = useState(null);
 
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
   const scrollContainerRef = useRef(null);
 const prevScrollHeightRef = useRef(0);
 
 const handleScroll = () => {
   const el = scrollContainerRef.current;
-  if (!el || isFetchingNextPage || !hasNextPage) return;
+  if (!el) return;
 
-  if (el.scrollTop < 100) {
+  if (!isFetchingNextPage && hasNextPage && el.scrollTop < 100) {
     prevScrollHeightRef.current = el.scrollHeight;
     fetchNextPage();
   }
+
+  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+  setShowScrollToBottom(distanceFromBottom > 200);
+};
+
+const scrollToBottom = () => {
+  bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 };
 
 useEffect(() => {
@@ -53,11 +63,11 @@ useEffect(() => {
     onHighlighted?.();
   }, [highlightMessageId]);
 
-  useEffect(() => {
-    if (!highlightMessageId) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (!highlightMessageId) {
+  //     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   }
+  // }, [messages]);
 
   const prevLastIdRef = useRef(null);
 
@@ -106,16 +116,17 @@ useEffect(() => {
   console.log({ pagesLoaded: data?.pages.length, hasNextPage, isFetchingNextPage, totalMessages: messages.length });
 
   return (
+   <div className="relative flex-1 overflow-hidden">
     <div
-  ref={scrollContainerRef}
-  onScroll={handleScroll}
-  className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4"
->
-  {isFetchingNextPage && (
-    <div className="flex justify-center py-2">
-      <Loader2 className="h-4 w-4 animate-spin text-gray-300" />
-    </div>
-  )}
+      ref={scrollContainerRef}
+      onScroll={handleScroll}
+      className="h-full overflow-y-auto px-3 py-3 sm:px-4 sm:py-4"
+    >
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-2">
+          <Loader2 className="h-4 w-4 animate-spin text-gray-300" />
+        </div>
+      )}
       {messages.map((message, i) => {
         const isOwn = message.senderId?._id === user?.id;
         const prev = messages[i - 1];
@@ -152,6 +163,16 @@ useEffect(() => {
         );
       })}
       <div ref={bottomRef} />
+    </div>
+    {showScrollToBottom && (
+      <button
+        type="button"
+        onClick={scrollToBottom}
+        className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-blue-600 shadow-md ring-1 ring-gray-200 hover:bg-gray-50"
+      >
+        <ChevronDown className="h-5 w-5" />
+      </button>
+    )}
     </div>
   );
 }
