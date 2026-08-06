@@ -5,6 +5,15 @@ import { useMentions } from "@/lib/hooks/useMentions";
 import Avatar from "@/components/ui/Avatar";
 import { formatChannelTimestamp } from "@/lib/utils/FormatTime";
 
+function highlightMention(text = "") {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    part.startsWith("@")
+      ? <span key={i} className="font-medium text-gray-900">{part}</span>
+      : part
+  );
+}
+
 export default function MentionsView({ onSelect }) {
   const { data: mentions, isLoading, isError } = useMentions();
 
@@ -46,11 +55,19 @@ export default function MentionsView({ onSelect }) {
                   in {m.channelId?.type === "group" ? m.channelId?.name : "Direct Message"}
                 </span>
               </p>
-              <span className="shrink-0 text-xs text-gray-400">
-                {formatChannelTimestamp(m.createdAt)}
-              </span>
             </div>
-            <p className="truncate text-xs text-gray-500">{m.content}</p>
+            <p className="truncate text-xs text-gray-500">{highlightMention(m.content)}</p>
+          </div>
+
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            {!m.isRead && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FF3742] px-1 text-[10px] font-semibold text-white">
+                1
+              </span>
+            )}
+            <span className="text-xs text-gray-400">
+              {formatChannelTimestamp(m.createdAt)}
+            </span>
           </div>
         </button>
       ))}

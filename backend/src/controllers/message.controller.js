@@ -1,5 +1,6 @@
 const Message = require("../models/Message");
 const Channel = require("../models/Channel");
+const Read = require("../models/Read"); 
 const parseMentions = require("../utils/parseMentions");
 const fetchLinkPreview = require("../utils/fetchLinkPreview");
 
@@ -198,7 +199,20 @@ async function getMyMentions(req, res, next) {
       .populate("senderId", "username avatarUrl")
       .populate("channelId", "name type");
 
-    res.json(messages.reverse());
+    // NEW: figure out which of these are still unread for this user
+    const channelIds = [...new Set(messages.map((m) => m.channelId?._id?.toString()).filter(Boolean))];
+    const reads = await Read.find({ userId, channelId: { $in: channelIds } }).lean();
+    const lastReadMap = Object.fromEntries(
+      reads.map((r) => [r.channelId.toString(), r.lastReadAt])
+    );
+
+    const withReadFlag = messages.map((m) => {
+      const lastReadAt = lastReadMap[m.channelId?._id?.toString()];
+      const isRead = lastReadAt ? new Date(m.createdAt) <= new Date(lastReadAt) : false;
+      return { ...m.toObject(), isRead };
+    });
+
+    res.json(withReadFlag.reverse());
   } catch (err) {
     next(err);
   }

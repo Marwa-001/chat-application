@@ -27,8 +27,8 @@ async function login(req, res, next) {
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
-    user.status = "online";
-    await user.save();
+    // user.status = "online";
+    // await user.save();
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ token, user: { id: user._id, username: user.username, email, avatarUrl: user.avatarUrl } });
