@@ -143,7 +143,12 @@ export default function MessageInput({ channelId, replyingToMessage, onCancelRep
           disabled={(!content.trim() && !pendingFiles.length) || isBusy}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white disabled:opacity-40"
         >
-          <Send className="h-4 w-4" />
+          {/* <Send className="h-4 w-4" /> */}
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="20" fill="#B4B7BB" />
+            <path d="M12.0095 30L32 20L12.0095 10L12 17.7778L26.2857 20L12 22.2222L12.0095 30Z" fill="white" />
+          </svg>
+
         </button>
       </form>
     </div>
